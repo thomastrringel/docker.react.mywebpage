@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: react-frontend
+    ports:
+      - "8080:5173"
+    restart: unless-stopped
+
+  astro_api:
+    build: ./backend/astro_api
+    container_name: astro-backend
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+
+  finance_api:
+    build: ./backend/finance_api
+    container_name: finance-backend
+    ports:
+      - "8002:8000"
+    restart: unless-stopped

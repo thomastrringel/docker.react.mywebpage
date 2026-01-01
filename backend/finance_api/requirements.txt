@@ -1,2 +1,10 @@
 fastapi
 uvicorn[standard]
+numpy
+mariadb
+yfinance
+pytz
+plotly
+requests
+jinja2
+matplotlib 

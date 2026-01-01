@@ -1,0 +1,24 @@
+.thick-line {
+  height: 5px;
+  background-color: var(--bs-pink);
+}
+
+.yFinance-data-frame {
+  border-style: solid;
+  border-color: var(--bs-black);
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.yFinance-data-value {
+  font-weight: bold;
+  text-align: center;
+  font-size: x-large;
+}
+
+.checkbox-visible {
+  border: 2px solid black;
+  width: 1.2em;
+  height: 1.2em;
+}
+

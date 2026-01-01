@@ -19,7 +19,8 @@ import { useState } from "react";
 export default function MainLayout() {
   // State für dynamische Container im Dashboard
   const [showE, setShowE] = useState(false);
-
+  const [selectedTicker, setSelectedTicker] = useState("");
+  
   return (
     <div style={{ display: "flex" }}>
 
@@ -44,7 +45,13 @@ export default function MainLayout() {
           - "/" lädt Dashboard.jsx
           - "/settings" lädt SettingsPage.jsx
         */}
-        <Outlet context={{ showE, setShowE }} />
+        <Outlet 
+          context={{ 
+            showE, 
+            setShowE, 
+            selectedTicker, 
+            setSelectedTicker 
+          }} />
       </div>
     </div>
   );

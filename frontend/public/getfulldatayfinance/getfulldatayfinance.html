@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta name="viewport" content="width=device-width", charset="UTF-8">
+    <title>YFinance Full Stock Data</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 90%; 
+            margin: 20px auto; 
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        th, td { 
+            border: 1px solid #dee2e6; 
+            padding: 12px 15px; 
+            text-align: left; 
+            vertical-align: top;
+        }
+        th { 
+            background-color: #e9ecef; 
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        td:first-child {
+            font-weight: 500;
+            color: #495057;
+        }
+        #modal-backdrop {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background-color: rgba(0,0,0,0.6); 
+            display: flex;
+            justify-content: center; 
+            align-items: center;
+            z-index: 1000;
+        }
+        #modal-content {
+            background-color: white; 
+            padding: 30px; 
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            width: 350px;
+            text-align: center;
+        }
+        #modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        #symbol-input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        #modal-content button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        #query-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        #cancel-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        #status-message {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #6c757d;
+        }
+    </style>
+    <script src="getfulldatayfinance.js"></script>
+
+</head>
+<body>
+
+    <h1>Yahoo Finance Stock Data</h1>
+    
+    <div id="results-container">
+        <table id="results-table">
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="status-message" style="display: none;"></div>
+
+    <div id="modal-backdrop">
+        <div id="modal-content">
+            <h2>Enter Stock Ticker</h2>
+            <input type="text" id="symbol-input" placeholder="e.g., AAPL, MSFT">
+            <div>
+                <button id="query-btn">Abfrage</button>
+                <button id="cancel-btn">Abbruch</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        alert('Hinweis: fetchURL Adresse ist noch fest im HTML-Code hinterlegt. Bitte config.js prüfen und anpassen, falls notwendig.');
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM fully loaded and parsed.');
+
+            // Check for AppConfig
+            if (typeof AppConfig === 'undefined') {
+                console.error('CRITICAL: AppConfig is not defined. Make sure config.js is loaded correctly before this script.');
+                alert('Configuration file (config.js) is missing or failed to load. The application cannot function.');
+                return;
+            }
+            console.log('AppConfig loaded successfully:', AppConfig);
+
+            const modal = document.getElementById('modal-backdrop');
+            const queryBtn = document.getElementById('query-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const symbolInput = document.getElementById('symbol-input');
+            const tableBody = document.querySelector('#results-table tbody');
+            const statusMessage = document.getElementById('status-message');
+
+            const hideModal = () => {
+                modal.style.display = 'none';
+            };
+
+            const showStatus = (message) => {
+                tableBody.innerHTML = '';
+                statusMessage.textContent = message;
+                statusMessage.style.display = 'block';
+                document.getElementById('results-table').style.display = 'none';
+            };
+            
+            const showTable = () => {
+                statusMessage.style.display = 'none';
+                document.getElementById('results-table').style.display = 'table';
+            }
+
+            const fetchData = async () => {
+                const symbol = symbolInput.value.trim().toUpperCase();
+                if (!symbol) {
+                    alert('Please enter a ticker symbol.');
+                    return;
+                }
+                hideModal();
+                console.log(`Preparing to fetch data for symbol: ${symbol}`);
+                showStatus(`Fetching data for ${symbol}...`);
+
+                const requestUrl = `${AppConfig.fastapiURL}/yfinance/getstockfulldata/${symbol}`;
+                // const requestUrl = `${FINANCEAPI_URL}/yfinance/getstockfulldata/${symbol}`;
+                console.log(`Requesting URL: ${requestUrl}`);
+
+                try {
+                    const response = await fetch(requestUrl);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`HTTP error! Status: ${response.status}, Body: ${errorText}`);
+                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Successfully fetched data:', data);
+
+                    renderTable(data);
+                    showTable();
+
+                } catch (error) {
+                    console.error('Error during fetch operation:', error);
+                    showStatus(`Error loading data: ${error.message}`);
+                }
+            };
+
+            const renderTable = (dataObject) => {
+                console.log('Starting to render table with received data.');
+                tableBody.innerHTML = ''; // Clear previous results or status
+                
+                const createRows = (obj, parentKey = '') => {
+                    Object.keys(obj).forEach(key => {
+                        if (obj.hasOwnProperty(key)) {
+                            const currentKey = parentKey ? `${parentKey}.${key}` : key;
+                            const value = obj[key];
+
+                            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                                createRows(value, currentKey);
+                            } else {
+                                const row = tableBody.insertRow();
+                                const keyCell = row.insertCell(0);
+                                const valueCell = row.insertCell(1);
+                                
+                                keyCell.textContent = currentKey;
+                                
+                                let displayValue = value;
+                                if (value === null || value === undefined) {
+                                    displayValue = 'N/A';
+                                } else if (Array.isArray(value)) {
+                                    displayValue = JSON.stringify(value, null, 2);
+                                }
+                                valueCell.textContent = displayValue;
+                            }
+                        }
+                    });
+                };
+
+                createRows(dataObject);
+                if (tableBody.rows.length === 0) {
+                    console.warn('Data object was empty or invalid, resulting in an empty table.');
+                    showStatus('Received no data or invalid data structure from the server.');
+                } else {
+                    console.log(`Table rendering complete. ${tableBody.rows.length} rows created.`);
+                }
+            };
+
+            queryBtn.addEventListener('click', fetchData);
+            
+            cancelBtn.addEventListener('click', () => {
+                hideModal();
+                console.log('User cancelled the query.');
+                showStatus('Query cancelled by user.');
+            });
+
+            symbolInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    fetchData();
+                }
+            });
+            
+            // Initially show the modal and focus the input
+            console.log('Initializing modal and focusing input.');
+            symbolInput.focus();
+        });
+    </script>
+
+</body>
+</html>

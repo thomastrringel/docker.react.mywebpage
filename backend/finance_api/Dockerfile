@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Systempakete installieren, die für mariadb benötigt werden
+# Systempakete installieren, die für mariadb und ipconfig benötigt werden
 RUN apt-get update && \
     apt-get install -y default-libmysqlclient-dev gcc && \
     apt-get clean

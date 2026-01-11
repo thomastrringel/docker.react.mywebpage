@@ -1,4 +1,3 @@
-version: '3.9'
 
 services:
   frontend:
@@ -6,6 +5,12 @@ services:
     container_name: react-frontend
     ports:
       - "8080:5173"
+    environment:
+      # Setze die Umgebungsvariablen für die Frontend-Anwendung übernommen von start-dev.ps1
+      - VITE_FINANCEAPI_URL=${VITE_FINANCEAPI_URL}
+      - VITE_ASTROAPI_URL=${VITE_ASTROAPI_URL}
+      - VITE_HOSTSYSTEM=${VITE_HOSTSYSTEM}
+      - VITE_HOST_IP=${VITE_HOST_IP}  # Umgebungsvariable für die IP des Host-Laptops
     restart: unless-stopped
 
   astro_api:
@@ -20,4 +25,6 @@ services:
     container_name: finance-backend
     ports:
       - "8002:8000"
+    environment:
+      - HOST_LAPTOP_IP=${VITE_HOST_IP}  # Umgebungsvariable für die IP des Host-Laptops
     restart: unless-stopped

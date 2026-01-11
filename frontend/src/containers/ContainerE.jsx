@@ -1,114 +1,45 @@
-import { useState, useEffect } from "react";
+// src/containers/ContainerE.jsx
+// -------------------------------------------------------------
+// Container E (UI-only)
+// -------------------------------------------------------------
+// - Zeigt das yFinance-Symbol an
+// - Zeigt Quote-Daten an (über Props)
+// - Zeigt Plotly-HTML an (über Props)
+// - Ruft fetchQuote über Callback auf
+// - KEINE eigene Datenlogik mehr
+// -------------------------------------------------------------
+
 import '../assets/css/myCSS.css';
 
-export default function ContainerE({ ticker }) {
-  const [symbol, setSymbol] = useState(ticker || "");
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [plotHtml, setPlotHtml] = useState("");
-  
-  const FASTAPI_URL = "http://localhost:8002";
-  
-  useEffect(() => {
-    if (ticker) {
-      setSymbol(ticker);
-    }
-  }, [ticker]);
-
-
-
-  // ---------------------------------------------------------
-  // 1) Quote laden + Plotly-Parameter berechnen
-  // ---------------------------------------------------------
-  async function fetchQuote() {
-    const currentSymbol = symbol.trim().toUpperCase();
-    if (!currentSymbol) return;
-
-    setLoading(true);
-    setData(null);
-    setPlotHtml("");
-
-    try {
-      const url = `${FASTAPI_URL}/yfinance/stock/${currentSymbol}`;
-      console.log("Fetching:", url);
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Server returned " + response.status);
-
-      const json = await response.json();
-      console.log("Received:", json);
-
-      setData(json);
-
-      // ---------------------------------------------------------
-      // Plotly-Parameter aus API-Daten berechnen (wie früher!)
-      // ---------------------------------------------------------
-      const min = json.fiftyTwoWeekLow ?? 0;
-      const max = json.fiftyTwoWeekHigh ?? 100;
-      const today = json.regularMarketPrice ?? 50;
-      const reference = json.previousClose ?? today;
-      const redline =
-        json.twoHundredDayAverage !== "N/A"
-          ? json.twoHundredDayAverage
-          : today;
-
-      console.log(
-        `Plotly params: symbol=${currentSymbol}, min=${min}, max=${max}, today=${today}, reference=${reference}, redline=${redline}`
-      );
-
-      // Jetzt Plotly laden
-      fetchPlotly(currentSymbol, min, max, today, reference, redline);
-
-    } catch (err) {
-      console.error("Error fetching quote:", err);
-      setData({ error: err.message });
-    }
-
-    setLoading(false);
-  }
-
-  // ---------------------------------------------------------
-  // 2) Plotly laden (mit allen Parametern!)
-  // ---------------------------------------------------------
-  async function fetchPlotly(symbol, min, max, today, reference, redline) {
-    try {
-      const url =
-        `${FASTAPI_URL}/getPlotlyhtml?symbol=${symbol}` +
-        `&min=${min}&max=${max}&today=${today}` +
-        `&reference=${reference}&redline=${redline}`;
-
-      console.log("Fetching Plotly:", url);
-
-      const response = await fetch(url);
-      const html = await response.text();
-
-      setPlotHtml(html);
-    } catch (err) {
-      console.error("Plotly error:", err);
-      setPlotHtml("<p style='color:red'>Fehler beim Laden der Grafik</p>");
-    }
-  }
-
-  // ---------------------------------------------------------
+export default function ContainerE({
+  symbol,
+  quoteData,
+  plotHtml,
+  loading,
+  onFetchQuote
+}) {
+  // -----------------------------------------------------------
   // JSX Rendering
-  // ---------------------------------------------------------
+  // -----------------------------------------------------------
   return (
     <div style={{ marginTop: "2rem" }}>
       <h3 style={{ textAlign: "center" }}>(E) Symbols from yFinance</h3>
 
-      {/* Eingabe + Button */}
       <div className="row" style={{ marginBottom: "1rem" }}>
         <div className="col">
           <p>yFinance symbol</p>
 
           <input
             type="text"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
+            value={symbol || ""}
+            onChange={(e) => onFetchQuote(e.target.value)}
             className="form-control"
           />
 
-          <button className="btn btn-primary mt-2" onClick={fetchQuote}>
+          <button
+            className="btn btn-primary mt-2"
+            onClick={() => onFetchQuote(symbol)}
+          >
             get Quote
           </button>
         </div>
@@ -116,56 +47,67 @@ export default function ContainerE({ ticker }) {
 
       {loading && <p>Lade Daten…</p>}
 
-      {data?.error && <p style={{ color: "red" }}>Fehler: {data.error}</p>}
+      {quoteData?.error && (
+        <p style={{ color: "red" }}>Fehler: {quoteData.error}</p>
+      )}
 
-      {/* Datenanzeige */}
-      {data && !data.error && (
+      {quoteData && !quoteData.error && (
         <div className="container">
+          {/* Datenanzeige */}
           <div className="row">
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>displayName</p>
-              <p className="yFinance-data-value">{data.name}</p>
+              <p className="yFinance-data-value">{quoteData.name}</p>
             </div>
 
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>currentPrice</p>
-              <p className="yFinance-data-value">{data.regularMarketPrice}</p>
+              <p className="yFinance-data-value">
+                {quoteData.regularMarketPrice}
+              </p>
             </div>
 
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>Currency</p>
-              <p className="yFinance-data-value">{data.currency}</p>
+              <p className="yFinance-data-value">{quoteData.currency}</p>
             </div>
 
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>priceToBook</p>
-              <p className="yFinance-data-value">{data.priceToBook}</p>
+              <p className="yFinance-data-value">{quoteData.priceToBook}</p>
             </div>
           </div>
 
           <div className="row" style={{ marginTop: "1rem" }}>
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>fiftyTwoWeekLow</p>
-              <p className="yFinance-data-value">{data.fiftyTwoWeekLow}</p>
+              <p className="yFinance-data-value">
+                {quoteData.fiftyTwoWeekLow}
+              </p>
             </div>
 
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>fiftyTwoWeekHigh</p>
-              <p className="yFinance-data-value">{data.fiftyTwoWeekHigh}</p>
+              <p className="yFinance-data-value">
+                {quoteData.fiftyTwoWeekHigh}
+              </p>
             </div>
 
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>fiftyDayAverage</p>
-              <p className="yFinance-data-value">{data.fiftyDayAverage}</p>
+              <p className="yFinance-data-value">
+                {quoteData.fiftyDayAverage}
+              </p>
             </div>
 
             <div className="col yFinance-data-frame">
               <p style={{ textAlign: "center" }}>twoHundredDayAverage</p>
-              <p className="yFinance-data-value">{data.twoHundredDayAverage}</p>
+              <p className="yFinance-data-value">
+                {quoteData.twoHundredDayAverage}
+              </p>
             </div>
           </div>
 
-          {/* Plotly Grafik */}
           {plotHtml && (
             <iframe
               title="Plotly Chart"

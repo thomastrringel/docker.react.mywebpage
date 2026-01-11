@@ -1,8 +1,51 @@
-// React Router Link nur für echte Seiten verwenden
-import { Link } from "react-router-dom";
+// src/components/Sidebar.jsx
+// --------------------------------------------------------------
+// Sidebar mit aktivem Highlighting, Bereichs-Routing und
+// persistent geöffneten Dropdown-Menüs (bleiben offen nach Klick)
+// --------------------------------------------------------------
+
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Navbar, Nav, NavDropdown, Container } from "react-bootstrap";
 
-export default function Sidebar({ onShowE }) {
+export default function Sidebar({
+  onShowE,
+  onShowFortuneOverTime,
+}) {
+  const navigate = useNavigate();
+
+  // Aktiver Menüpunkt-Stil
+  const activeStyle = {
+    backgroundColor: "#0d6efd",
+    color: "white",
+    fontWeight: "bold",
+  };
+
+  // ------------------------------------------------------------
+  // Dropdown-Zustände
+  // ------------------------------------------------------------
+  const [showFinanceTools, setShowFinanceTools] = useState(false);
+  const [showAstronomyTools, setShowAstronomyTools] = useState(false);
+  const [showSystemTools, setShowSystemTools] = useState(false);
+  const [showSonstiges, setShowSonstiges] = useState(false);
+
+  // ------------------------------------------------------------
+  // Hilfsfunktion: Dropdown offen lassen bei Item-Klick
+  // ------------------------------------------------------------
+  const keepOpen = (setter) => (isOpen, _event, metadata) => {
+    // react-bootstrap schließt Dropdowns bei "select" → ignorieren
+    if (metadata?.source === "select") return;
+    setter(isOpen);
+  };
+
+  // ------------------------------------------------------------
+  // Navigation ohne Dropdown zu schließen
+  // ------------------------------------------------------------
+  const navigateWithoutClosing = (e, path) => {
+    e.preventDefault();
+    navigate(path);
+  };
+
   return (
     <Navbar
       bg="dark"
@@ -17,18 +60,15 @@ export default function Sidebar({ onShowE }) {
         width: "250px",
         overflowY: "auto",
         zIndex: 1000,
-        background: "#000"
+        background: "#000",
       }}
     >
       <Container fluid className="flex-column p-0">
 
-        {/* Brand – lädt die komplette Seite neu */}
+        {/* Brand – lädt Begrüßungsseite */}
         <Navbar.Brand
           href="/"
-          onClick={() => {
-            console.log("Reload triggered");
-            window.location.reload();
-          }}
+          onClick={() => window.location.reload()}
           className="d-flex justify-content-center align-items-center m-0 py-3"
         >
           <div className="rotate-n-15">
@@ -41,83 +81,93 @@ export default function Sidebar({ onShowE }) {
 
         <Nav className="flex-column w-100">
 
-          {/* Interne Seite über Router (falls du später eine echte Dashboard-Seite willst) */}
-          <Nav.Link as={Link} to="/">MyDashboard</Nav.Link>
+          {/* ------------------------------------------------------
+             Finanzbereich
+          ------------------------------------------------------ */}
+          <hr style={{ borderTop: "1px solid #666", margin: "0.5rem 0" }} />
 
-          {/* myFortune */}
-          <NavDropdown
-            title="myFortune"
-            menuVariant="light"
-            className="text-light"
+          <Nav.Link
+            as={NavLink}
+            to="/finance"
+            style={({ isActive }) => (isActive ? activeStyle : undefined)}
           >
+            myFortune
+          </Nav.Link>
 
-            {/* (A) – dynamischer Container, NICHT über Router */}
+          <NavDropdown
+            title="Finance Tools"
+            menuVariant="light"
+            autoClose="outside"
+            show={showFinanceTools}
+            onToggle={keepOpen(setShowFinanceTools)}
+          >
             <NavDropdown.Item
-              onClick={() => {
-                console.log("Load A");
-                // später: onShowA() wenn du A dynamisch machen willst
-              }}
+              onClick={(e) => navigateWithoutClosing(e, "/finance")}
             >
               (A) PUT Ticker to LS
             </NavDropdown.Item>
 
-            {/* (B) – Beispiel für echte Router-Navigation */}
-            <NavDropdown.Item 
-              as={Link} 
-              to="/b"
+            <NavDropdown.Item
+              onClick={(e) => navigateWithoutClosing(e, "/b")}
             >
               (B) GET Ticker from LS
             </NavDropdown.Item>
 
-            <NavDropdown.Divider />
-
-            {/* Externe HTML-Seite */}
             <NavDropdown.Item
-              href="fortune/fortuneovertime.html"
-              target="_blank"
-            >
-              Fortune over time
-            </NavDropdown.Item>
-
-            {/* (E) – dynamischer Container, NICHT über Router */}
-            <NavDropdown.Item
-              onClick={() => {
-                console.log("Load E");
-                onShowE();   // Container E unter A einblenden
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/finance");
+                onShowE();
               }}
             >
               (E) getquote yFinance
             </NavDropdown.Item>
 
-            {/* Externe HTML-Seite + Aktion */}
-            <NavDropdown.Item 
-              href="getfulldatayfinance.html" 
-              target="_blank" 
-              onClick={() => console.log("Load E")}
+            <NavDropdown.Item
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/finance");
+                onShowFortuneOverTime();
+              }}
+            >
+              (F) Fortune over time (React)
+            </NavDropdown.Item>
+
+            <NavDropdown.Divider />
+
+            <NavDropdown.Item
+              href="getfulldatayfinance/getfulldatayfinance.html"
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
             >
               getfulldata yFinance
             </NavDropdown.Item>
-
-            {/* (C) – dynamisch oder später Router, aktuell nur Aktion */}
-            <NavDropdown.Item 
-              onClick={() => console.log("Load C")}
-            >
-              (C) get_quote FMP
-            </NavDropdown.Item>
-
-            {/* (F) – dynamisch oder später Router */}
-            <NavDropdown.Item 
-              onClick={() => console.log("Load F")}
-            >
-              (F) test2 - php
-            </NavDropdown.Item>
           </NavDropdown>
 
-          {/* Astronomy – alles externe Tools */}
-          <NavDropdown title="Astronomy" menuVariant="light">
+          {/* ------------------------------------------------------
+             Astronomie-Bereich
+          ------------------------------------------------------ */}
+          <hr style={{ borderTop: "1px solid #666", margin: "0.5rem 0" }} />
+
+          <Nav.Link
+            as={NavLink}
+            to="/astronomy"
+            style={({ isActive }) => (isActive ? activeStyle : undefined)}
+          >
+            Astronomy
+          </Nav.Link>
+
+          <NavDropdown
+            title="Astronomy Tools"
+            menuVariant="light"
+            autoClose="outside"
+            show={showAstronomyTools}
+            onToggle={keepOpen(setShowAstronomyTools)}
+          >
             <NavDropdown.Item
               href="geokoordinaten.html"
               target="_blank"
+              onClick={(e) => e.stopPropagation()}
             >
               Geolocation
             </NavDropdown.Item>
@@ -125,55 +175,110 @@ export default function Sidebar({ onShowE }) {
             <NavDropdown.Item
               href="getopenweatherinfo.html"
               target="_blank"
+              onClick={(e) => e.stopPropagation()}
             >
               OpenWeather
             </NavDropdown.Item>
           </NavDropdown>
 
-          {/* Sonstiges – externe Tools */}
-          <NavDropdown title="Sonstiges" menuVariant="light">
+          {/* ------------------------------------------------------
+             Sonstiges
+          ------------------------------------------------------ */}
+          <hr style={{ borderTop: "1px solid #666", margin: "0.5rem 0" }} />
+
+          <NavDropdown
+            title="Sonstiges"
+            menuVariant="light"
+            autoClose="outside"
+            show={showSonstiges}
+            onToggle={keepOpen(setShowSonstiges)}
+          >
             <NavDropdown.Item
               href="livecams/livecams.html"
               target="_blank"
+              onClick={(e) => e.stopPropagation()}
             >
               LiveCams
             </NavDropdown.Item>
 
-            <NavDropdown.Item href="economicrules/economicrules.html">
+            <NavDropdown.Item
+              href="economicrules/economicrules.html"
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+            >
               EconomicRules
+            </NavDropdown.Item>
+
+            <NavDropdown.Item
+              href="treinadorportugues/treinadorportugues.html"
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Treinador Portugues
             </NavDropdown.Item>
           </NavDropdown>
 
-          {/* System – externe Tools */}
-          <NavDropdown title="System" menuVariant="light">
-            <NavDropdown.Item onClick={() => console.log("Check Server")}>
+          {/* ------------------------------------------------------
+             System-Bereich
+          ------------------------------------------------------ */}
+          <hr style={{ borderTop: "1px solid #666", margin: "0.5rem 0" }} />
+
+          <Nav.Link
+            as={NavLink}
+            to="/system"
+            style={({ isActive }) => (isActive ? activeStyle : undefined)}
+          >
+            System
+          </Nav.Link>
+
+          <NavDropdown
+            title="System Tools"
+            menuVariant="light"
+            autoClose="outside"
+            show={showSystemTools}
+            onToggle={keepOpen(setShowSystemTools)}
+          >
+            <NavDropdown.Item
+              onClick={(e) => navigateWithoutClosing(e, "/system")}
+            >
               Check Server
             </NavDropdown.Item>
 
             <NavDropdown.Item
               href="http://localhost:8001/docs"
               target="_blank"
+              onClick={(e) => e.stopPropagation()}
             >
-              FastAPI Swagger
+              FastAPI ASTRO Swagger
             </NavDropdown.Item>
 
             <NavDropdown.Item
-              href="http://localhost:8001/redoc"
+              href="http://localhost:8002/docs"
               target="_blank"
+              onClick={(e) => e.stopPropagation()}
             >
-              FastAPI Redoc
+              FastAPI FINANCE Swagger
             </NavDropdown.Item>
 
-            <NavDropdown.Item href="#" target="_blank">
+            <NavDropdown.Item
+              href="#"
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+            >
               matplotlib
             </NavDropdown.Item>
 
-            <NavDropdown.Item href="webcam.html" target="_blank">
+            <NavDropdown.Item
+              href="webcam.html"
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+            >
               live USB Cam
             </NavDropdown.Item>
           </NavDropdown>
 
-          {/* NN – nur Aktion */}
+          {/* NN */}
+          <hr style={{ borderTop: "1px solid #666", margin: "0.5rem 0" }} />
           <Nav.Link onClick={() => console.log("NN")}>NN</Nav.Link>
         </Nav>
       </Container>

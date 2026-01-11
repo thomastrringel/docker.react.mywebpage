@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treinador de Português - AI Powered</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .preserve-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .card-back { transform: rotateY(180deg); }
+        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .loading-pulse { animation: pulse-soft 2s infinite; }
+    </style>
+    <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+  }
+}
+</script>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-900">
+
+    <div class="max-w-2xl mx-auto space-y-6 pb-20">
+        <header class="flex justify-between items-center">
+            <div class="flex-1"></div>
+            <div class="text-center flex-1">
+                <h1 class="text-3xl font-bold text-slate-900">🎓 Treinador</h1>
+                <p class="text-slate-500 italic text-xs">AI Powered</p>
+            </div>
+            <div class="flex-1 flex justify-end">
+                <button onclick="toggleSettings()" class="p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- API KEY WARNUNG -->
+        <div id="api-warning" class="hidden bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl cursor-pointer hover:bg-amber-100 transition-colors" onclick="toggleSettings()">
+            <div class="flex">
+                <div class="flex-shrink-0">⚠️</div>
+                <div class="ml-3">
+                    <p class="text-sm text-amber-700 font-medium">KI-Funktionen deaktiviert.</p>
+                    <p class="text-xs text-amber-600">Klicke hier, um deinen API-Key zu hinterlegen.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRAINER BEREICH -->
+        <div id="trainer-section" class="space-y-6">
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div id="progress-bar" class="bg-blue-600 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <div class="relative h-96 w-full perspective-1000 cursor-pointer" onclick="flipCard()">
+                <div id="card-inner" class="relative w-full h-full preserve-3d">
+                    <div class="absolute inset-0 w-full h-full backface-hidden bg-white rounded-2xl shadow-xl border-2 border-blue-100 flex flex-col items-center justify-center p-8 text-center">
+                        <span class="text-sm font-medium text-blue-600 mb-4 uppercase tracking-wider">Português</span>
+                        <h2 id="vocab-portuguese" class="text-2xl md:text-4xl font-bold text-slate-800 leading-tight">...</h2>
+                        <button onclick="event.stopPropagation(); playPronunciation()" class="mt-6 p-3 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                        </button>
+                    </div>
+                    <div class="absolute inset-0 w-full h-full backface-hidden card-back bg-green-50 rounded-2xl shadow-xl border-2 border-green-100 flex flex-col p-6 overflow-y-auto">
+                        <div class="flex flex-col items-center justify-center min-h-full text-center">
+                            <span class="text-sm font-medium text-green-600 mb-2 uppercase tracking-wider">Deutsch</span>
+                            <h2 id="vocab-german" class="text-xl md:text-2xl font-semibold mb-4">...</h2>
+                            <div class="bg-white p-3 rounded-lg border border-green-200 w-full mb-4 text-sm text-left">
+                                <span id="vocab-explanation">...</span>
+                            </div>
+                            <div id="ai-content" class="w-full space-y-3 hidden text-left">
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <p id="ai-example" class="text-sm text-slate-800 italic"></p>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap justify-center gap-2 mt-4">
+                                <button id="ai-btn" onclick="event.stopPropagation(); getAiSupport()" class="px-3 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">✨ KI-Analyse</button>
+                                <button id="chat-btn" onclick="event.stopPropagation(); openChat()" class="px-3 py-2 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700">✨ Mit KI üben</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-4">
+                <button onclick="prevVocab()" id="prev-btn" class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-white disabled:opacity-50 transition-all">← Zurück</button>
+                <span id="counter" class="text-slate-500 font-medium">0 / 0</span>
+                <button onclick="nextVocab()" id="next-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">Nächste →</button>
+            </div>
+        </div>
+
+        <!-- KI KURS GENERATOR -->
+        <section class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
+            <h3 class="font-bold text-lg mb-2">✨ KI Kurs-Generator</h3>
+            <div class="flex gap-2">
+                <input type="text" id="ai-topic-input" placeholder="Thema (z.B. Urlaub)..." class="flex-1 p-2 rounded-lg text-slate-900 text-sm outline-none">
+                <button onclick="generateAiCourse()" id="gen-course-btn" class="px-4 py-2 bg-white text-blue-600 rounded-lg font-bold text-sm hover:bg-blue-50 transition-colors disabled:opacity-50">Erstellen</button>
+            </div>
+            <div id="gen-status" class="mt-2 text-xs text-blue-100 hidden">Generiere...</div>
+        </section>
+
+        <!-- DATENBANK -->
+        <section class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+            <div class="p-4 bg-slate-100 border-b flex justify-between items-center">
+                <h3 class="font-bold text-slate-700">📂 Datenbank</h3>
+                <button onclick="toggleEditor()" id="toggle-edit-btn" class="text-sm text-blue-600 font-medium hover:underline">Hinzufügen +</button>
+            </div>
+            <div id="vocab-form" class="hidden p-4 bg-slate-50 border-b space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="input-port" placeholder="Portugiesisch" class="p-2 border rounded text-sm outline-none">
+                    <input type="text" id="input-germ" placeholder="Deutsch" class="p-2 border rounded text-sm outline-none">
+                </div>
+                <textarea id="input-expl" placeholder="Erklärung..." class="w-full p-2 border rounded text-sm h-16 outline-none"></textarea>
+                <button onclick="addVocab()" class="w-full py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700">Speichern</button>
+            </div>
+            <div class="max-h-64 overflow-y-auto p-2" id="vocab-list"></div>
+        </section>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-overlay" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 space-y-4">
+            <h4 class="text-xl font-bold">Einstellungen</h4>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-500 uppercase">Gemini API Key</label>
+                <input type="password" id="api-key-input" placeholder="Key hier einfügen..." class="w-full p-3 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                <p class="text-[10px] text-slate-400">Dein Key wird nur lokal im Browser gespeichert.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="saveApiKey()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700">Speichern</button>
+                <button onclick="toggleSettings()" class="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAT OVERLAY -->
+    <div id="chat-overlay" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col h-[500px]">
+            <div class="p-4 border-b flex justify-between items-center bg-purple-600 text-white rounded-t-2xl">
+                <h4 class="font-bold">✨ Coach</h4>
+                <button onclick="closeChat()" class="text-white">✕</button>
+            </div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 text-sm bg-slate-50"></div>
+            <div class="p-4 border-t flex gap-2 bg-white rounded-b-2xl">
+                <input type="text" id="chat-input" placeholder="Schreibe..." class="flex-1 p-2 border rounded-lg text-sm outline-none">
+                <button onclick="sendChatMessage()" class="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenAI, Type } from "@google/genai";
+
+        // Sicherer Check auf process.env
+        let envKey = "";
+        try {
+            if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+                envKey = process.env.API_KEY;
+            }
+        } catch (e) {
+            // Ignoriere Fehler falls process nicht existiert
+        }
+
+        // API Key Handling
+        let currentApiKey = localStorage.getItem('gemini_api_key') || envKey;
+        
+        function updateApiWarning() {
+            const warning = document.getElementById('api-warning');
+            if (!currentApiKey) {
+                warning.classList.remove('hidden');
+            } else {
+                warning.classList.add('hidden');
+            }
+        }
+
+        window.toggleSettings = () => {
+            const overlay = document.getElementById('settings-overlay');
+            overlay.classList.toggle('hidden');
+            if (!overlay.classList.contains('hidden')) {
+                document.getElementById('api-key-input').value = currentApiKey || '';
+            }
+        };
+
+        window.saveApiKey = () => {
+            const val = document.getElementById('api-key-input').value.trim();
+            if (val) {
+                currentApiKey = val;
+                localStorage.setItem('gemini_api_key', val);
+                updateApiWarning();
+                window.toggleSettings();
+                location.reload(); 
+            }
+        };
+
+        const ai = new GoogleGenAI({ apiKey: currentApiKey || 'NO_KEY' });
+        
+        let vocabularyData = JSON.parse(localStorage.getItem('portuguese_vocab')) || [
+            { portuguese: "Bom dia", german: "Guten Morgen", explanation: "Begrüßung am Morgen." },
+            { portuguese: "Obrigado", german: "Danke", explanation: "Männliche Form." },
+            { portuguese: "Tudo bem?", german: "Alles gut?", explanation: "Informell." }
+        ];
+
+        let currentIndex = 0;
+        let isFlipped = false;
+        let aiCache = new Map();
+        let chatHistory = [];
+
+        // UI Refs
+        const cardInner = document.getElementById('card-inner');
+        const vocabPort = document.getElementById('vocab-portuguese');
+        const vocabGerm = document.getElementById('vocab-german');
+        const vocabExpl = document.getElementById('vocab-explanation');
+        const aiContent = document.getElementById('ai-content');
+        const aiExample = document.getElementById('ai-example');
+        const progressBar = document.getElementById('progress-bar');
+        const counterText = document.getElementById('counter');
+        const vocabList = document.getElementById('vocab-list');
+        const vocabForm = document.getElementById('vocab-form');
+        const chatOverlay = document.getElementById('chat-overlay');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+
+        window.toggleEditor = () => {
+            vocabForm.classList.toggle('hidden');
+            document.getElementById('toggle-edit-btn').innerText = vocabForm.classList.contains('hidden') ? "Hinzufügen +" : "Abbrechen";
+        };
+
+        window.addVocab = (data = null) => {
+            const port = data ? data.portuguese : document.getElementById('input-port').value.trim();
+            const germ = data ? data.german : document.getElementById('input-germ').value.trim();
+            const expl = data ? data.explanation : document.getElementById('input-expl').value.trim();
+            if (!port || !germ) return;
+            vocabularyData.push({ portuguese: port, german: germ, explanation: expl || "Manuell." });
+            saveAndRefresh();
+            if (!data) window.toggleEditor();
+        };
+
+        window.deleteVocab = (index) => {
+            if (confirm("Löschen?")) {
+                vocabularyData.splice(index, 1);
+                if (currentIndex >= vocabularyData.length) currentIndex = Math.max(0, vocabularyData.length - 1);
+                saveAndRefresh();
+            }
+        };
+
+        function saveAndRefresh() {
+            localStorage.setItem('portuguese_vocab', JSON.stringify(vocabularyData));
+            renderVocabList();
+            updateContent();
+        }
+
+        function renderVocabList() {
+            vocabList.innerHTML = vocabularyData.map((v, i) => `
+                <div class="flex items-center justify-between p-3 border-b border-slate-50 text-sm hover:bg-slate-50 transition-colors">
+                    <span class="truncate pr-4"><strong>${v.portuguese}</strong> - ${v.german}</span>
+                    <button onclick="deleteVocab(${i})" class="text-slate-300 hover:text-rose-500 p-1">✕</button>
+                </div>
+            `).join('');
+        }
+
+        window.flipCard = () => {
+            if (vocabularyData.length === 0) return;
+            isFlipped = !isFlipped;
+            cardInner.classList.toggle('rotate-y-180', isFlipped);
+        };
+
+        function updateContent() {
+            if (vocabularyData.length === 0) {
+                vocabPort.innerText = "Leer";
+                vocabGerm.innerText = "-";
+                return;
+            }
+            const current = vocabularyData[currentIndex];
+            vocabPort.innerText = current.portuguese;
+            vocabGerm.innerText = current.german;
+            vocabExpl.innerText = current.explanation;
+            aiContent.classList.toggle('hidden', !aiCache.has(currentIndex));
+            if (aiCache.has(currentIndex)) aiExample.innerText = aiCache.get(currentIndex).example;
+            progressBar.style.width = ((currentIndex + 1) / vocabularyData.length) * 100 + "%";
+            counterText.innerText = (currentIndex + 1) + " / " + vocabularyData.length;
+            document.getElementById('prev-btn').disabled = (currentIndex === 0);
+            document.getElementById('next-btn').disabled = (currentIndex === vocabularyData.length - 1);
+        }
+
+        window.generateAiCourse = async () => {
+            const topic = document.getElementById('ai-topic-input').value.trim();
+            if (!topic || !currentApiKey) return;
+            const btn = document.getElementById('gen-course-btn');
+            btn.disabled = true;
+            document.getElementById('gen-status').classList.remove('hidden');
+            try {
+                const response = await ai.models.generateContent({
+                    model: 'gemini-3-flash-preview',
+                    contents: `Generiere 5 Vokabeln zu: "${topic}".`,
+                    config: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: { portuguese: { type: Type.STRING }, german: { type: Type.STRING }, explanation: { type: Type.STRING } },
+                                required: ["portuguese", "german", "explanation"]
+                            }
+                        }
+                    }
+                });
+                JSON.parse(response.text).forEach(v => window.addVocab(v));
+                document.getElementById('ai-topic-input').value = "";
+            } catch (e) { alert("KI Fehler. Key prüfen?"); }
+            btn.disabled = false;
+            document.getElementById('gen-status').classList.add('hidden');
+        };
+
+        window.getAiSupport = async () => {
+            if (!currentApiKey) return;
+            const btn = document.getElementById('ai-btn');
+            btn.disabled = true;
+            try {
+                const response = await ai.models.generateContent({
+                    model: 'gemini-3-flash-preview',
+                    contents: `Beispielsatz für: "${vocabularyData[currentIndex].portuguese}".`,
+                    config: {
+                        responseMimeType: "application/json",
+                        responseSchema: { type: Type.OBJECT, properties: { example: { type: Type.STRING } }, required: ["example"] }
+                    }
+                });
+                aiCache.set(currentIndex, JSON.parse(response.text));
+                updateContent();
+            } catch (e) {}
+            btn.disabled = false;
+        };
+
+        window.openChat = () => {
+            chatOverlay.classList.remove('hidden');
+            chatMessages.innerHTML = `<div class="bg-white p-3 rounded-lg mr-8 border text-slate-700">Lass uns "${vocabularyData[currentIndex].portuguese}" üben!</div>`;
+            chatHistory = [{ role: "user", parts: [{ text: `Coach für "${vocabularyData[currentIndex].portuguese}".` }] }];
+        };
+
+        window.closeChat = () => chatOverlay.classList.add('hidden');
+
+        window.sendChatMessage = async () => {
+            const msg = chatInput.value.trim();
+            if (!msg || !currentApiKey) return;
+            const userDiv = document.createElement('div');
+            userDiv.className = "bg-purple-600 text-white p-3 rounded-lg ml-8 text-right";
+            userDiv.innerText = msg;
+            chatMessages.appendChild(userDiv);
+            chatInput.value = "";
+            chatHistory.push({ role: "user", parts: [{ text: msg }] });
+            try {
+                const response = await ai.models.generateContent({
+                    model: 'gemini-3-flash-preview',
+                    contents: { parts: chatHistory.flatMap(h => h.parts) },
+                    config: { systemInstruction: "Kurzer brasilianischer Coach. Deutsch in Klammern." }
+                });
+                const aiDiv = document.createElement('div');
+                aiDiv.className = "bg-white p-3 rounded-lg mr-8 border text-slate-700";
+                aiDiv.innerText = response.text;
+                chatMessages.appendChild(aiDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (e) {}
+        };
+
+        window.nextVocab = () => { currentIndex++; isFlipped = false; cardInner.classList.remove('rotate-y-180'); updateContent(); };
+        window.prevVocab = () => { currentIndex--; isFlipped = false; cardInner.classList.remove('rotate-y-180'); updateContent(); };
+        window.playPronunciation = () => { window.speechSynthesis.speak(new SpeechSynthesisUtterance(vocabularyData[currentIndex].portuguese)); };
+
+        // Exponiere Funktionen explizit am window Objekt für die Inline-onclick Handler
+        Object.assign(window, {
+            toggleSettings: window.toggleSettings,
+            saveApiKey: window.saveApiKey,
+            flipCard: window.flipCard,
+            playPronunciation: window.playPronunciation,
+            getAiSupport: window.getAiSupport,
+            openChat: window.openChat,
+            prevVocab: window.prevVocab,
+            nextVocab: window.nextVocab,
+            generateAiCourse: window.generateAiCourse,
+            toggleEditor: window.toggleEditor,
+            addVocab: window.addVocab,
+            deleteVocab: window.deleteVocab,
+            closeChat: window.closeChat,
+            sendChatMessage: window.sendChatMessage
+        });
+
+        updateApiWarning();
+        renderVocabList();
+        updateContent();
+    </script>
+</body>
+</html>

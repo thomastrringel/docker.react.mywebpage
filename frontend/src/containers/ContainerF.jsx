@@ -1,14 +1,27 @@
 // src/containers/ContainerF.jsx
 //
-// Fortune over time – Ausgaben/Einnahmen + Weekly Change
+// -------------------------------------------------------------
+// ContainerF – "Fortune over time"
+// -------------------------------------------------------------
+// Zeigt zwei Plotly-Diagramme:
+// 1) Zeitverlauf von Ausgaben und Einnahmen
+// 2) Weekly Change mit drei Indikatoren
 //
+// Besonderheiten:
+// - Lädt Daten von FastAPI (/getInvest)
+// - Nutzt Plotly für Visualisierung
+// - Passt sich responsiv an die Bildschirmbreite an
+// - Schriftgrößen und Layout optimiert für harmonische Darstellung
+// -------------------------------------------------------------
 
 import { useEffect, useState } from "react";
 import Plotly from "plotly.js-dist-min";
+import { FINANCEAPI_URL } from "../config/apiConfig";
+
 
 export default function ContainerF() {
   const [investData, setInvestData] = useState(null);
-  const FASTAPI_URL = "http://localhost:8002";
+  const FASTAPI_URL = FINANCEAPI_URL;
 
   // ---------------------------------------------------------
   // 1) Daten von FastAPI laden
@@ -29,7 +42,7 @@ export default function ContainerF() {
   }, []);
 
   // ---------------------------------------------------------
-  // 2) Erstes Diagramm: Ausgaben/Einnahmen
+  // 2) Erstes Diagramm: Ausgaben/Einnahmen über Zeit
   // ---------------------------------------------------------
   useEffect(() => {
     if (!investData) return;
@@ -50,20 +63,22 @@ export default function ContainerF() {
 
     const layout = {
       title: "Fortune over time",
+      margin: { t: 40, b: 40, l: 50, r: 30 },
     };
 
-    Plotly.newPlot("plotlyAusgabenEinnahmen", [traceAusgaben, traceEinnahmen], layout);
+    Plotly.newPlot("plotlyAusgabenEinnahmen", [traceAusgaben, traceEinnahmen], layout, {
+      responsive: true,
+    });
   }, [investData]);
 
   // ---------------------------------------------------------
-  // 3) Zweites Diagramm: Weekly Change
+  // 3) Zweites Diagramm: Weekly Change (Indikatoren)
   // ---------------------------------------------------------
   useEffect(() => {
     if (!investData) return;
 
     const a = investData.a;
     const e = investData.e;
-    // const x = investData.x;
 
     if (!Array.isArray(a) || a.length < 2) return;
 
@@ -82,26 +97,32 @@ export default function ContainerF() {
         type: "indicator",
         mode: "number+gauge+delta",
         value: WERT_EINNAHME_LAST,
-        delta: { reference: WERT_AUSGABE_LAST },
+        delta: { reference: WERT_AUSGABE_LAST, font: { size: 12 } },
         domain: { row: 0, column: 0 },
-        title: { text: "EINNAHME UND GuV", align: "center" },
+        title: { text: "EINNAHME UND GuV", font: { size: 13 }, align: "center" },
+        number: { font: { size: 16 } },
       },
       {
         type: "indicator",
         mode: "number+gauge+delta",
         value: WERT_GuV_LAST,
-        delta: { reference: WERT_GuV_PREV },
+        delta: { reference: WERT_GuV_PREV, font: { size: 12 } },
         domain: { row: 0, column: 1 },
-        title: { text: "GuV UND DELTA", align: "center" },
+        title: { text: "GuV UND DELTA", font: { size: 13 }, align: "center" },
+        number: { font: { size: 16 } },
       },
       {
         type: "indicator",
         mode: "number+delta",
         value: WERT_REL_GuVLAST_AUSGABELAST,
-        number: { suffix: "%" },
-        delta: { position: "top", reference: WERT_REL_GuVPREV_AUSGABEPREV },
+        number: { suffix: "%", font: { size: 16 } },
+        delta: {
+          position: "top",
+          reference: WERT_REL_GuVPREV_AUSGABEPREV,
+          font: { size: 12 },
+        },
         domain: { row: 0, column: 2 },
-        title: { text: "RELATIVE PERFORMANCE", align: "center" },
+        title: { text: "RELATIVE PERFORMANCE", font: { size: 13 }, align: "center" },
       },
     ];
 
@@ -118,12 +139,27 @@ export default function ContainerF() {
   // JSX Rendering
   // ---------------------------------------------------------
   return (
-    <div style={{ marginTop: "2rem" }}>
+    <div
+      style={{
+        marginTop: "2rem",
+        width: "100%",           // passt sich dem Container an
+        maxWidth: "100%",         // keine Überbreite
+        overflowX: "hidden",      // verhindert horizontales Scrollen
+      }}
+    >
+      {/* Titel + Diagramm 1 */}
       <h3>Fortune over time</h3>
-      <div id="plotlyAusgabenEinnahmen" style={{ width: "100%", height: "400px" }}></div>
+      <div
+        id="plotlyAusgabenEinnahmen"
+        style={{ width: "100%", height: "400px" }}
+      ></div>
 
+      {/* Titel + Diagramm 2 */}
       <h3 style={{ marginTop: "2rem" }}>Weekly Change of fortune</h3>
-      <div id="plotlyWeeklyChange" style={{ width: "100%", height: "400px" }}></div>
+      <div
+        id="plotlyWeeklyChange"
+        style={{ width: "100%", height: "400px" }}
+      ></div>
     </div>
   );
 }

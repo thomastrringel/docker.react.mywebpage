@@ -40,14 +40,12 @@ allow_methods: Eine Liste von HTTP-Methoden, die erlaubt sind (z. B. ["GET", "PO
 allow_headers: Eine Liste von Headern, die erlaubt sind. "*" erlaubt alle Header.
 
 implemented routes:
-/fmp/{symbol}           -> Financial Modeling Prep API Daten abrufen
 /readsql                -> SQL Query aus URL-Parameter ausführen und Ergebnis zurückgeben
 /addSymbol              -> Symbol in MariaDB-Tabelle SYMBOLS einfügen
 /removeSymbol           -> Symbol aus MariaDB-Tabelle SYMBOLS entfernen
 /getInvest              -> Invest-Daten aus MariaDB abrufen und als JSON zurückgeben
 /getPlotlyhtml          -> Plotly-Grafik als HTML rendern und zurückgeben
 /checkfastapi           -> Prüfen, ob FastAPI läuft
-/weather                -> Wetterdaten von OpenWeatherMap abrufen
 /matplotlib             -> Matplotlib-Grafik in HTML rendern und zurückgeben
 /                       -> Startseite mit Tabellennamen aus MariaDB rendern
 /yfinance/stock/{symbol} -> Aktienkursdaten von yfinance abrufen
@@ -60,9 +58,8 @@ import os
 # Lese den Port aus der Umgebungsvariable, mit 5000 als Standardwert, falls sie nicht gesetzt ist.
 APP_PORT = int(os.getenv("APP_PORT", 5000))
 
-
 # FastAPI Imports 
-from fastapi import FastAPI, Request, APIRouter, HTTPException
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -77,12 +74,6 @@ import yfinance as yf
 
 # für /getPlotlyhtml
 import plotly.graph_objects as go # pip install plotly
-
-# für /fmp/<symbol>
-import requests
-
-# für /getInvest
-import json
 
 # für Zeitkonvertierung in /getInvest
 import pytz
@@ -112,6 +103,39 @@ app.add_middleware(
 #
 # INTERNE FUNKTIONEN
 #
+
+def get_MariaDB_data(sql_query="SHOW TABLES"):
+    try:
+        conn = mariadb.connect(
+            host="192.168.178.20",
+            user="admin",
+            password="",
+            database="test",
+            port=3306
+        )
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+
+        # Prüfe, ob das Statement ein SELECT ist
+        if sql_query.strip().lower().startswith("select"):
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            result = [dict(zip(columns, row)) for row in rows]
+        else:
+            conn.commit()
+            result = {"status": "ok", "message": "Statement erfolgreich ausgeführt."}
+
+        cursor.close()
+        conn.close()
+        return result
+
+    except mariadb.Error as e:
+        # Fehlerbehandlung wie bisher
+        ...
+
+
+
+
 
 def get_MariaDB_data(sql_query="SHOW TABLES"):
     """
@@ -148,22 +172,20 @@ def get_MariaDB_data(sql_query="SHOW TABLES"):
             database="test",
             port=3306
         )
-        logging.info("✅ Verbindung zur Datenbank erfolgreich!")
         cursor = conn.cursor()
         cursor.execute(sql_query)
-        rows = cursor.fetchall()
 
-        # Konvertiere die Ergebnismenge in eine Liste von Dictionaries
-        columns = [desc[0] for desc in cursor.description]
-        result = [dict(zip(columns, row)) for row in rows]
+        # Prüfe, ob das Statement ein SELECT ist
+        if sql_query.strip().lower().startswith("select"):
+            rows = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            result = [dict(zip(columns, row)) for row in rows]
+        else:
+            conn.commit()
+            result = {"status": "ok", "message": "Statement erfolgreich ausgeführt."}
 
         cursor.close()
         conn.close()
-
-        logging.info("✅ Abfrage erfolgreich ausgeführt!")
-        logging.info(result)
-        logging.info(f"Anzahl der zurückgegebenen Zeilen: {len(result)}")
-
         return result
 
     except mariadb.Error as e:
@@ -190,52 +212,30 @@ def convert_timestamp_to_local(timestamp):
     print(readable_date_local)
 
 
-def convert_timestamp_to_local(timestamp):
-    # Beispiel-Timestamp (Unix-Zeit in Sekunden)
-    # timestamp = 1609459200  # Entspricht 2021-01-01 00:00:00 UTC
-    # Konvertierung in ein lesbares Datum in der lokalen Zeitzone   
-    tz = pytz.timezone('Europe/Berlin')
-    readable_date_local = datetime.fromtimestamp(timestamp, tz).strftime('%Y-%m-%d %H:%M:%S')
-    print(readable_date_local)
-
-
 #
 # ROUTES (FastAPI)
 #
-@app.get('/fmp/{symbol}')
-def fmp(symbol: str):
+import socket
+@app.get('/getipconfig')
+def get_ipconfig_details():
     """
-    Diese Route ruft Kursdaten von der Financial Modeling Prep API ab.  
-    Beispiel: http://localhost:5000/fmp/AAPL
-    Der Symbol wird aus der URL entnommen und an die API übergeben.  
-    Die API-Antwort wird als JSON zurückgegeben.
-    beispielhafte API-Antwort:
-    [
-        {
-            "symbol": "AAPL",
-            "name": "Apple Inc.",
-            "price": 172.99
-        }
-    ]
+    Gibt Informationen über den Server und die Host-Maschine zurück.
     """
+    # 1. Interne IP des Containers (wie bisher)
+    container_hostname = socket.gethostname()
+    container_ip = socket.gethostbyname(container_hostname)
 
-    api_key = 'B81k3WDoIG15kMJBfNADpbpelWd8ZAJC'
-    url = f"https://financialmodelingprep.com/stable/quote?symbol={symbol}&apikey={api_key}"
+    # 2. IP des Host-Laptops aus der Umgebungsvariable lesen
+    # Wir geben einen Standardwert an, falls die Variable nicht gesetzt ist,
+    # das hilft bei der Fehlersuche.
+    # die laptop IP wird im docker-compose.yml als extra_host definiert und kann nicht automatisch ermittelt werden
+    host_ip = os.getenv("HOST_LAPTOP_IP", "Umgebungsvariable HOST_LAPTOP_IP nicht gesetzt")
 
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # wirft Fehler bei HTTP 4xx/5xx
-        data = response.json() # parse JSON response
-        logging.info(f"✅ Kursdaten erfolgreich abgerufen: {data}")
-        return JSONResponse(content=data)
-    
-    except requests.exceptions.HTTPError as http_err:
-        logging.info(f"❌ HTTP-Fehler: {http_err}")
-    except requests.exceptions.RequestException as req_err:
-        logging.info(f"❌ Verbindungsfehler: {req_err}")
-    except ValueError as json_err:
-        logging.info(f"❌ Fehler beim Parsen der JSON-Daten: {json_err}")
-    return JSONResponse(content=None)
+    return {
+        "container_hostname": container_hostname,
+        "container_ip": container_ip,
+        "host_laptop_ip": host_ip
+    }
 
 
 @app.get('/readsql')
@@ -441,23 +441,6 @@ def index(request: Request):
 @app.get('/checkfastapi')
 def checkfastapi():
     return PlainTextResponse("✅ FastAPI ist installiert und läuft!")    
-
-
-@app.get("/weather")
-def get_weather(lat: float = 48.776, lon: float = 9.130):
-    """
-    Ruft Wetterdaten von OpenWeatherMap ab.
-    Der API-Schlüssel wird sicher aus einer Umgebungsvariable gelesen.
-    """
-    api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="OpenWeatherMap API Key ist nicht auf dem Server konfiguriert.")
-
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric&lang=de"
-    
-    response = requests.get(url)
-    response.raise_for_status()  # Wirft eine Exception bei Fehlern (z.B. 404, 500)
-    return response.json()
 
 
 

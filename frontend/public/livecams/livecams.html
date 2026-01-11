@@ -1,82 +1,70 @@
 <!DOCTYPE html>
-<html data-bs-theme="light" lang="en">
+<html data-bs-theme="light" lang="de">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>myAdminDesign</title>
-    <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i&amp;display=swap">
-    <link rel="stylesheet" href="../assets/css/myCSS.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Webcams</title>
 
-    <style>
-        .dark-bg {
-            background-color: black;
-        }
-
-        .title-center { 
-            text-align: center; 
-        }
-    </style>
-
+    <!-- NEUE externe CSS-Datei -->
+    <link rel="stylesheet" href="../assets/css/livecams.css" />
 </head>
 
-<body class="dark-bg">
-    <h1 class="title-center">LIVE WEBCAMS</h1>
-        <option value="Seite1">Santa Claus Village</option>
-        <option value="Seite2">Virgin Islands Bar</option>
-        <option value="Seite3">Rolling Cam World</option>
-        <option value="Seite4">Daily sunset from Thong Yang Bungalows · Thailand / Koh Phangan</option>
-        <option value="Seite5">Live Port Miami</option>
-        <option value="Seite6">Levi Ski Resort Finland</option>
-        <option value="Seite7">Namibia Desert</option>
-        <option value="Seite8">Japan Kabukicho</option>
-    </select><button type="button" id="button">Klick mich</button><iframe id="IDLiveWebcamsIFrame" width="560" height="315" src="" title="YouTube video player" frameborder="0" allowfullscreen=""></iframe><script>
+<body role="main">
+    <h1>LIVE WEBCAMS 2</h1>
 
-    const WebCamLinks = [];
-    WebCamLinks[0]= "https://www.youtube.com/embed/Cp4RRAEgpeU";
-    WebCamLinks[1]= "https://www.youtube.com/embed/2wqpy036z24";
-    WebCamLinks[2]= "https://www.youtube.com/embed/8KGXSjtS5pk";
-    WebCamLinks[3]= "https://www.youtube.com/embed/f-LOXKYf1sY";
-    WebCamLinks[4]= "https://www.youtube.com/embed/GJBGwMCtG_c";
-    WebCamLinks[5]= "https://www.youtube.com/embed/BXAjaffPHtY";
-    WebCamLinks[6]= "https://www.youtube.com/embed/ydYDqZQpim8";
-    WebCamLinks[7]= "https://www.youtube.com/embed/gFRtAAmiFbE";
+    <!-- Auswahlbox -->
+    <select id="IDLiveWebcamsListBox" class="form-select" aria-label="Webcam-Auswahl">
+        <option value="0">Santa Claus Village</option>
+        <option value="1">Virgin Islands Bar</option>
+        <option value="2">Rolling Cam World</option>
+        <option value="3">Daily sunset from Thong Yang Bungalows · Thailand / Koh Phangan</option>
+        <option value="4">Live Port Miami</option>
+        <option value="5">Levi Ski Resort Finland</option>
+        <option value="6">Namibia Desert</option>
+        <option value="7">Japan Kabukicho</option>
+    </select>
 
-    // HTML Button über JavaScript eine Funktionzuweisen
-    
-    // Funktion beim Laden der Seite aufrufen
-    window.addEventListener("load", function() {
-        // überprüfen ob die ID des Buttons auf der Seite vorhanden ist (optional)
-        if (document.getElementById("button") != null) {
-            // der ID den Event Handler Click hinzufügen
-            // als Event die Funktion Test aufrufen
-            document.getElementById("button").addEventListener("click", test);
+    <!-- Button -->
+    <button type="button" id="button" class="btn btn-primary">Klick mich</button>
+
+    <!-- IFrame -->
+    <iframe
+        id="IDLiveWebcamsIFrame"
+        width="800"
+        height="450"
+        src=""
+        title="Live Webcams"
+        frameborder="0"
+        allowfullscreen
+    ></iframe>
+
+    <script>
+        const WebCamLinks = [
+            "https://www.youtube.com/embed/Cp4RRAEgpeU",
+            "https://www.youtube.com/embed/2wqpy036z24",
+            "https://www.youtube.com/embed/8KGXSjtS5pk",
+            "https://www.youtube.com/embed/f-LOXKYf1sY",
+            "https://www.youtube.com/embed/GJBGwMCtG_c",
+            "https://www.youtube.com/embed/BXAjaffPHtY",
+            "https://www.youtube.com/embed/ydYDqZQpim8",
+            "https://www.youtube.com/embed/gFRtAAmiFbE"
+        ];
+
+        window.addEventListener("load", () => {
+            const button = document.getElementById("button");
+            button.addEventListener("click", loadWebcam);
+        });
+
+        function loadWebcam() {
+            const listBox = document.getElementById("IDLiveWebcamsListBox");
+            const index = listBox.selectedIndex;
+
+            const iframe = document.getElementById("IDLiveWebcamsIFrame");
+            iframe.src = WebCamLinks[index];
         }
-    });
+    </script>
 
-    function test(){
-        // welcher Wert wurde in der Listbox ausgewählt
-        var e = document.getElementById("IDLiveWebcamsListBox");
-        var strSelected = e.selectedIndex; // e.options[e.selectedIndex].value
-        
-        // baue die Adresse zusammen mit dem Sortierbefehl
-        var adresse = "ausgewählt wurde = " + strSelected;
-        alert (adresse);
-        
-        // Zeige die neue Seite in einem eigenen Fenster an    
-        
-        var myIFrame = document.getElementById('IDLiveWebcamsIFrame'); // grabs #my-div
-        myIFrame.src = WebCamLinks[strSelected];
-    
-    }
-
-
-
-</script>
-    <script src="../assets/bootstrap/js/bootstrap.min.js"></script>
-    <script src="../assets/js/bs-init.js"></script>
-    <script src="../assets/js/theme.js"></script>
 </body>
 
 </html>

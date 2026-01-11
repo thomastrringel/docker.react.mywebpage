@@ -1,0 +1,22 @@
+Docker Engine starten
+
+cd c:\tmp\docker\myreactdocker
+.\start-dev.ps1    
+docker-compose down
+
+
+docker cp frontend/public/livecams/livecams.html react-frontend:/app/public/livecams
+docker cp frontend/src/containers/ContainerA.jsx react-frontend:/app/src/containers
+docker cp frontend/src/layout/MainLayout.jsx react-frontend:/app/src/layout
+docker cp frontend/src/App.jsx react-frontend:/app/src
+docker cp frontend/src/config/apiConfig.js react-frontend:/app/src/config/apiConfig.js
+docker cp frontend/src/components/Sidebar.jsx react-frontend:/app/src/components
+docker cp frontend/src/components/WelcomePage.jsx react-frontend:/app/src/components
+
+docker exec -it react-frontend sh 
+=> landet in /app = Verzeichnis frontend
+=> Pfadangabe inkl. /app
+
+# bereinigen
+docker builder prune
+docker compose build --no-cache

@@ -4,4 +4,5 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 EXPOSE 5173
-CMD ["npm", "run", "dev", "--", "--host"]
+# CMD ["vite", "--https", "--host"] # Use this for HTTPS
+CMD ["npm", "run", "dev", "--", "--host"]   

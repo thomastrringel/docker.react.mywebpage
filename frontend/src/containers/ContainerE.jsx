@@ -76,6 +76,11 @@ export default function ContainerE({
               <p style={{ textAlign: "center" }}>priceToBook</p>
               <p className="yFinance-data-value">{quoteData.priceToBook}</p>
             </div>
+
+            <div className="col yFinance-data-frame">
+              <p style={{ textAlign: "center" }}>forwardPE</p>
+              <p className="yFinance-data-value">{quoteData.forwardPE}</p>
+            </div>
           </div>
 
           <div className="row" style={{ marginTop: "1rem" }}>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocation API Beispiel</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #geo-data { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+    <h1>Geolocation API Beispiel</h1>
+    <p>Klicke auf den Button, um deine Geokoordinaten abzufragen. Du musst die Berechtigung im Browser erteilen.</p>
+
+    <button onclick="getGeoLocation()">Meinen Standort abfragen</button>
+
+    <div id="geo-data">
+        Hier werden deine Koordinaten angezeigt...
+    </div>
+
+    <script>
+        function getGeoLocation() {
+          if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError, {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 0
+            });
+          } else {
+            document.getElementById('geo-data').innerText = "Geolocation wird von diesem Browser nicht unterstützt.";
+          }
+        }
+
+        function showPosition(position) {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          const altitude = position.coords.altitude;
+
+          const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+          const outputElement = document.getElementById('geo-data');
+          outputElement.innerHTML = `
+            <strong>Breitengrad:</strong> ${latitude}<br>
+            <strong>Längengrad:</strong> ${longitude}<br>
+            <strong>Höhe:</strong> ${altitude ? altitude + ' Meter' : 'Nicht verfügbar'}<br><br>
+            <a href="${googleMapsUrl}" target="_blank">Standort auf Google Maps anzeigen</a>
+          `;
+        }
+
+        function showError(error) {
+          let errorMessage = "Ein unbekannter Fehler ist aufgetreten.";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Benutzer hat die Anfrage für Geolocation abgelehnt.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Standortinformationen sind nicht verfügbar.";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Die Anfrage zur Ermittlung des Benutzerstandorts ist abgelaufen.";
+              break;
+            case error.UNKNOWN_ERROR:
+              errorMessage = "Ein unbekannter Fehler ist aufgetreten.";
+              break;
+          }
+          document.getElementById('geo-data').innerText = `Fehler: ${errorMessage}`;
+        }
+    </script>
+
+</body>
+</html>

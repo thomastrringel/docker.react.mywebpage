@@ -7,6 +7,8 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Navbar, Nav, NavDropdown, Container } from "react-bootstrap";
+import { FINANCEAPI_URL } from "../config/apiConfig";
+import { ASTROAPI_URL } from "../config/apiConfig";
 
 export default function Sidebar({
   onShowE,
@@ -165,7 +167,7 @@ export default function Sidebar({
             onToggle={keepOpen(setShowAstronomyTools)}
           >
             <NavDropdown.Item
-              href="geokoordinaten.html"
+              href="getgpsdata/geokoordinaten.html"
               target="_blank"
               onClick={(e) => e.stopPropagation()}
             >
@@ -173,7 +175,7 @@ export default function Sidebar({
             </NavDropdown.Item>
 
             <NavDropdown.Item
-              href="getopenweatherinfo.html"
+              href="getweatherdata/getopenweatherinfo.html"
               target="_blank"
               onClick={(e) => e.stopPropagation()}
             >
@@ -245,7 +247,7 @@ export default function Sidebar({
             </NavDropdown.Item>
 
             <NavDropdown.Item
-              href="http://localhost:8001/docs"
+              href={`${ASTROAPI_URL}/docs`}
               target="_blank"
               onClick={(e) => e.stopPropagation()}
             >
@@ -253,7 +255,7 @@ export default function Sidebar({
             </NavDropdown.Item>
 
             <NavDropdown.Item
-              href="http://localhost:8002/docs"
+              href={`${FINANCEAPI_URL}/docs`}
               target="_blank"
               onClick={(e) => e.stopPropagation()}
             >

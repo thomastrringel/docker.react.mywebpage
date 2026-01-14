@@ -1,4 +1,3 @@
-
 services:
   frontend:
     build: ./frontend
@@ -12,6 +11,8 @@ services:
       - VITE_HOSTSYSTEM=${VITE_HOSTSYSTEM}
       - VITE_HOST_IP=${VITE_HOST_IP}  # Umgebungsvariable für die IP des Host-Laptops
     restart: unless-stopped
+    networks:
+      - proxy-network
 
   astro_api:
     build: ./backend/astro_api
@@ -28,3 +29,8 @@ services:
     environment:
       - HOST_LAPTOP_IP=${VITE_HOST_IP}  # Umgebungsvariable für die IP des Host-Laptops
     restart: unless-stopped
+
+# Hier definieren wir, dass das Netzwerk bereits existiert
+networks:
+  proxy-network:
+    external: true

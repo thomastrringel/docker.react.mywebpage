@@ -16,8 +16,7 @@ export default function ContainerA({
   selectedIndex,
   onSelectIndex,
   onAddTicker,
-  onRemoveTicker,
-  onReloadTickers
+  onRemoveTicker
 }) {
   // Dialog-States
   const [showAddDialog, setShowAddDialog] = useState(false);

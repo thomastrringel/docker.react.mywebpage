@@ -531,7 +531,7 @@ def get_stock_data(symbol: str):
     ticker = yf.Ticker(symbol.upper())
     info = ticker.info
 
-    # aussortieren der gewünschten Informationen
+    # aussortieren der gewünschten Basis-Informationen
     quoteType = info.get('quoteType', 'INVALID') # US, DE, INDEX, ETF, FUTURE
     symbol = info.get('symbol', 'N/A') # US, DE, INDEX, ETF, FUTURE
     name = info.get('shortName', 'N/A') # US, DE, INDEX, ETF, FUTURE
@@ -540,7 +540,6 @@ def get_stock_data(symbol: str):
     # industry = info.get('industry', 'N/A') # US, DE, -INDEX, -ETF, -FUTURE
     region = info.get('region', 'N/A') # US, DE, INDEX, ETF, FUTURE
     # sector = info.get('sector', 'N/A') # US, DE, -INDEX, -ETF, -FUTURE
-
     currency = info.get('currency', 'N/A') # US, DE, INDEX, ETF, FUTURE
 
     # Hilfsfunktion zur sicheren Formatierung von Zahlen
@@ -558,6 +557,7 @@ def get_stock_data(symbol: str):
     fiftyDayAverage = format_value(info.get('fiftyDayAverage'))
     twoHundredDayAverage = format_value(info.get('twoHundredDayAverage'))
     fiveYearAvgDividendYield = format_value(info.get('fiveYearAvgDividendYield'))
+    forwardPE = format_value(info.get('forwardPE'))
 
     # Erstelle das Ergebnis-Dictionary
     result = {
@@ -573,7 +573,8 @@ def get_stock_data(symbol: str):
         'priceToBook': priceToBook,
         'fiftyDayAverage': fiftyDayAverage,
         'twoHundredDayAverage': twoHundredDayAverage,
-        'fiveYearAvgDividendYield': fiveYearAvgDividendYield
+        'fiveYearAvgDividendYield': fiveYearAvgDividendYield,
+        'forwardPE': forwardPE
     }
 
     # Alle Schlüssel-Werte-Paare als Response zurückgeben

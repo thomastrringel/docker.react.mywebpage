@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wetter-Anzeige</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .weather-card { background-color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        h1 { margin-top: 0; }
+        #weather-icon { width: 100px; height: 100px; }
+        #temperature { font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0; }
+        #description { text-transform: capitalize; font-size: 1.2rem; color: #555; }
+        .details { text-align: left; margin-top: 1.5rem; }
+        .details p { margin: 0.5rem 0; }
+        .error { color: red; font-weight: bold; }
+        .loading { color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="weather-card">
+        <h1>Wetter in Stuttgart</h1>
+        <div id="weather-result">
+            <p class="loading">Lade Wetterdaten...</p>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        // Die URL deines eigenen Backend-Servers.
+        // Ersetze 'localhost:DEIN_FASTAPI_PORT' falls nötig.
+        // Der Port muss dem HOST_FASTAPI_PORT aus deiner docker-compose.yml entsprechen.
+        const apiUrl = `${AppConfig.fastapiURL}/weather`
+        console.log("Request weather data via:", apiUrl);
+        // const apiUrl = 'http://localhost:5000/weather';
+
+        async function fetchWeather() {
+            const resultDiv = document.getElementById('weather-result');
+            
+            try {
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`Fehler vom Server: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                displayWeather(data);
+
+            } catch (error) {
+                console.error('Fehler beim Abrufen der Wetterdaten:', error);
+                resultDiv.innerHTML = `<p class="error">Wetterdaten konnten nicht geladen werden.</p>`;
+            }
+        }
+
+        function displayWeather(data) {
+            const resultDiv = document.getElementById('weather-result');
+
+            // Konvertiere Kelvin zu Celsius
+            const tempCelsius = data.main.temp.toFixed(1);
+            const feelsLikeCelsius = data.main.feels_like.toFixed(1);
+            const iconCode = data.weather[0].icon;
+            const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+            resultDiv.innerHTML = `
+                <img id="weather-icon" src="${iconUrl}" alt="Wetter-Icon">
+                <p id="temperature">${tempCelsius}°C</p>
+                <p id="description">${data.weather[0].description}</p>
+                <div class="details">
+                    <p><strong>Gefühlt wie:</strong> ${feelsLikeCelsius}°C</p>
+                    <p><strong>Luftfeuchtigkeit:</strong> ${data.main.humidity}%</p>
+                    <p><strong>Wind:</strong> ${data.wind.speed} m/s</p>
+                </div>
+            `;
+        }
+
+        // Lade die Wetterdaten, sobald die Seite geladen ist.
+        document.addEventListener('DOMContentLoaded', fetchWeather);
+    </script>
+
+</body>
+</html>
